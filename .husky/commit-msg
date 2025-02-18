@@ -1,15 +1,22 @@
 #!/bin/sh
 
 commit_msg_file=$1
-commit_msg=$(cat $1)
 
-# commit -m 옵션 감지 (커밋 메시지에 템플릿이 없는 경우)
-if ! grep -q "^#" "$commit_msg_file"; then
+# 파일 크기가 0이면 오류 처리
+if [ ! -s "$commit_msg_file" ]; then
+    echo "❌ 커밋 메시지가 비어있습니다."
+    exit 1
+fi
+
+commit_msg=$(cat "$commit_msg_file")
+
+# '-m' 옵션 감지: 한 줄로 된 메시지만 있으면 막기
+if [ "$(echo "$commit_msg" | wc -l)" -eq 1 ]; then
     echo "❌ 'git commit -m' 옵션은 사용할 수 없습니다."
     echo "
 💡 다음과 같이 합니다.
 1. git commit (엔터)
-2. 템플릿에 맞춰 커밋 메세지 작성
+2. 템플릿에 맞춰 커밋 메시지 작성
 3. 저장 후 종료
 "
     exit 1
