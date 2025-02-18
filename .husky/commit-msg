@@ -21,3 +21,28 @@ if [ "$(echo "$commit_msg" | wc -l)" -eq 1 ]; then
 "
     exit 1
 fi
+#!/bin/sh
+
+commit_msg_file=$1
+commit_msg=$(cat $1)
+
+# 주석을 제외한 실제 메세지만 추출
+filtered_msg=$(echo "$commit_msg" | grep -v '^#')
+echo "원본 커밋 메세지"
+echo "$filtered_msg"
+
+# 현재 브랜치 이름 가져오기
+branch_name=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+
+# Jira 이슈 ID 추출 (예: ISSUE-123)
+issue_id=$(echo "$branch_name" | grep -oE '[A-Z]+-[0-9]+' || echo "")
+
+# 이슈 ID가 있고, 커밋 메세지에 이슈 ID가 없는 경우에만 추가
+if [ ! -z "$issue_id" ] && ! echo "$commit_msg" | grep -q "\[$issue_id\]"; then
+    commit_msg="[$issue_id] $commit_msg"
+    echo "$commit_msg" > "$commit_msg_file"
+fi
+
+filtered_msg=$(echo "$commit_msg" | grep -v '^#')
+echo "수정된 커밋 메세지"
+echo "$filtered_msg"
